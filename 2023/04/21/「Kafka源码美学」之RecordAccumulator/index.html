@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zgyyq.github.io","root":"/blog/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Hello 大家好，我是最光阴。在上一篇文章中介绍了Kafka生产者的核心流程，可见Kafka将各个功能模块进行拆分，每个模块都具有独立的功能和职责。接下来，让我们一起探讨每个模板的细节，体验Kafka源码设计的美学。 首先让我们来看下RecordAccumulator - 数据累加器。 RecordAccumulator实现了缓存消息，以topic、partition为单元，把消息以Produc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kafka源码美学」之RecordAccumulator - 数据累加器">
+<meta property="og:url" content="https://zgyyq.github.io/blog/2023/04/21/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BRecordAccumulator/index.html">
+<meta property="og:site_name" content="最光阴写字的地方">
+<meta property="og:description" content="Hello 大家好，我是最光阴。在上一篇文章中介绍了Kafka生产者的核心流程，可见Kafka将各个功能模块进行拆分，每个模块都具有独立的功能和职责。接下来，让我们一起探讨每个模板的细节，体验Kafka源码设计的美学。 首先让我们来看下RecordAccumulator - 数据累加器。 RecordAccumulator实现了缓存消息，以topic、partition为单元，把消息以Produc">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://zgyyq.github.io/blog/img/kafka%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/RecordAccumulator.png">
+<meta property="article:published_time" content="2023-04-21T13:59:15.000Z">
+<meta property="article:modified_time" content="2023-04-27T15:00:17.663Z">
+<meta property="article:author" content="最光阴">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://zgyyq.github.io/blog/img/kafka%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/RecordAccumulator.png">
+
+<link rel="canonical" href="https://zgyyq.github.io/blog/2023/04/21/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BRecordAccumulator/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>「Kafka源码美学」之RecordAccumulator - 数据累加器 | 最光阴写字的地方</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">最光阴写字的地方</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zgyyq.github.io/blog/2023/04/21/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BRecordAccumulator/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="最光阴">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="最光阴写字的地方">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          「Kafka源码美学」之RecordAccumulator - 数据累加器
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-21 21:59:15" itemprop="dateCreated datePublished" datetime="2023-04-21T21:59:15+08:00">2023-04-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-04-27 23:00:17" itemprop="dateModified" datetime="2023-04-27T23:00:17+08:00">2023-04-27</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/" itemprop="url" rel="index"><span itemprop="name">Kafka源码美学</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Hello 大家好，我是最光阴。在上一篇文章中介绍了Kafka生产者的核心流程，可见Kafka将各个功能模块进行拆分，每个模块都具有独立的功能和职责。接下来，让我们一起探讨每个模板的细节，体验Kafka源码设计的美学。</p>
+<p>首先让我们来看下RecordAccumulator - 数据累加器。</p>
+<p>RecordAccumulator实现了缓存消息，以topic、partition为单元，把消息以ProducerBatch为单位累积。多个ProducerBatch保存在Deque队列中。当Deque中最新的batch已不能容纳消息时，就会创建新的batch来继续缓存，并将其加入Deque。</p>
+<h2 id="RecordAccumulator的存储结构："><a href="#RecordAccumulator的存储结构：" class="headerlink" title="RecordAccumulator的存储结构："></a>RecordAccumulator的存储结构：</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ConcurrentMap&lt;String <span class="comment">/*topic*/</span>, TopicInfo&gt; topicInfoMap = <span class="keyword">new</span> <span class="title class_">CopyOnWriteMap</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">TopicInfo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> ConcurrentMap&lt;Integer <span class="comment">/*partition*/</span>, Deque&lt;ProducerBatch&gt;&gt; batches = <span class="keyword">new</span> <span class="title class_">CopyOnWriteMap</span>&lt;&gt;();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接下来根据惯例，还是看看RecordAccumulator的原理架构图：<br>##架构图</p>
+<p><img src="/blog/img/kafka%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/RecordAccumulator.png" alt="img"></p>
+<h2 id="RecordAccumulator代码分析"><a href="#RecordAccumulator代码分析" class="headerlink" title="RecordAccumulator代码分析"></a>RecordAccumulator代码分析</h2><h3 id="Append"><a href="#Append" class="headerlink" title="Append"></a>Append</h3><p>append()方法是RecordAccumulator暴露的累积消息入口，KafkaProducer通过此接口累积消息。我们也先从此方法开始层层递进，分析累积消息的逻辑。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> RecordAppendResult <span class="title function_">append</span><span class="params">(String topic,</span></span><br><span class="line"><span class="params">                                     <span class="type">int</span> partition,</span></span><br><span class="line"><span class="params">                                     <span class="type">long</span> timestamp,</span></span><br><span class="line"><span class="params">                                     <span class="type">byte</span>[] key,</span></span><br><span class="line"><span class="params">                                     <span class="type">byte</span>[] value,</span></span><br><span class="line"><span class="params">                                     Header[] headers,</span></span><br><span class="line"><span class="params">                                     AppendCallbacks callbacks,</span></span><br><span class="line"><span class="params">                                     <span class="type">long</span> maxTimeToBlock,</span></span><br><span class="line"><span class="params">                                     <span class="type">boolean</span> abortOnNewBatch,</span></span><br><span class="line"><span class="params">                                     <span class="type">long</span> nowMs,</span></span><br><span class="line"><span class="params">                                     Cluster cluster)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        <span class="comment">// 获取或初始化topicInfo</span></span><br><span class="line">        <span class="type">TopicInfo</span> <span class="variable">topicInfo</span> <span class="operator">=</span> topicInfoMap.computeIfAbsent(topic, k -&gt; <span class="keyword">new</span> <span class="title class_">TopicInfo</span>(logContext, k, batchSize));</span><br><span class="line"></span><br><span class="line">        <span class="type">ByteBuffer</span> <span class="variable">buffer</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                <span class="comment">// 获取或初始化发送队列</span></span><br><span class="line">                Deque&lt;ProducerBatch&gt; dq = topicInfo.batches.computeIfAbsent(effectivePartition, k -&gt; <span class="keyword">new</span> <span class="title class_">ArrayDeque</span>&lt;&gt;());</span><br><span class="line">                <span class="comment">// 队列是线程不安全的，所以往队列中添加元素时需要加锁</span></span><br><span class="line">                <span class="keyword">synchronized</span> (dq) &#123;</span><br><span class="line">                    <span class="comment">// 尝试添加将数据添加到队列尾部</span></span><br><span class="line">                    <span class="type">RecordAppendResult</span> <span class="variable">appendResult</span> <span class="operator">=</span> tryAppend(timestamp, key, value, headers, callbacks, dq, nowMs);</span><br><span class="line">                    <span class="keyword">if</span> (appendResult != <span class="literal">null</span>) &#123;</span><br><span class="line">                        <span class="keyword">return</span> appendResult;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 到这里则表明需要新申请producerBatch，用来存储新数据</span></span><br><span class="line">                <span class="keyword">if</span> (buffer == <span class="literal">null</span>) &#123;</span><br><span class="line">                    <span class="comment">// 从BufferPool申请ByteBuffer。如果BufferPool空间不足就轮询等待。</span></span><br><span class="line">                    buffer = free.allocate(size, maxTimeToBlock);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">synchronized</span> (dq) &#123;</span><br><span class="line">                    <span class="comment">// 添加一个新的batch到队列</span></span><br><span class="line">                    <span class="type">RecordAppendResult</span> <span class="variable">appendResult</span> <span class="operator">=</span> appendNewBatch(topic, effectivePartition, dq, timestamp, key, value, headers, callbacks, buffer, nowMs);</span><br><span class="line">                    <span class="keyword">return</span> appendResult;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            free.deallocate(buffer);</span><br><span class="line">            appendsInProgress.decrementAndGet();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先来分析存储的数据结构：</p>
+<ul>
+<li>TopicInfo：维护一个CopyOnWriteMap结构，key是分区号，value维护着需要发送的数据队列<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">TopicInfo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> ConcurrentMap&lt;Integer <span class="comment">/*partition*/</span>, Deque&lt;ProducerBatch&gt;&gt; batches = <span class="keyword">new</span> <span class="title class_">CopyOnWriteMap</span>&lt;&gt;();</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> BuiltInPartitioner builtInPartitioner;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">TopicInfo</span><span class="params">(LogContext logContext, String topic, <span class="type">int</span> stickyBatchSize)</span> &#123;</span><br><span class="line">        builtInPartitioner = <span class="keyword">new</span> <span class="title class_">BuiltInPartitioner</span>(logContext, topic, stickyBatchSize);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="TryAppend"><a href="#TryAppend" class="headerlink" title="TryAppend"></a>TryAppend</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> RecordAppendResult <span class="title function_">tryAppend</span><span class="params">(<span class="type">long</span> timestamp, <span class="type">byte</span>[] key, <span class="type">byte</span>[] value, Header[] headers,</span></span><br><span class="line"><span class="params">                                        Callback callback, Deque&lt;ProducerBatch&gt; deque, <span class="type">long</span> nowMs)</span> &#123;</span><br><span class="line">       <span class="type">ProducerBatch</span> <span class="variable">last</span> <span class="operator">=</span> deque.peekLast();</span><br><span class="line">       <span class="keyword">if</span> (last != <span class="literal">null</span>) &#123;</span><br><span class="line">           <span class="type">int</span> <span class="variable">initialBytes</span> <span class="operator">=</span> last.estimatedSizeInBytes();</span><br><span class="line">           <span class="type">FutureRecordMetadata</span> <span class="variable">future</span> <span class="operator">=</span> last.tryAppend(timestamp, key, value, headers, callback, nowMs);</span><br><span class="line">           <span class="keyword">if</span> (future == <span class="literal">null</span>) &#123;</span><br><span class="line">               last.closeForRecordAppends();</span><br><span class="line">           &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">               <span class="type">int</span> <span class="variable">appendedBytes</span> <span class="operator">=</span> last.estimatedSizeInBytes() - initialBytes;</span><br><span class="line">               <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">RecordAppendResult</span>(future, deque.size() &gt; <span class="number">1</span> || last.isFull(), <span class="literal">false</span>, <span class="literal">false</span>, appendedBytes);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>同步代码块中尝试去做一次追加操作tryAppend(),如果成功就直接返回追加的结果对象。tryAppend方法中逻辑是：</p>
+<p>a）如果dq中有ProducerBatch则往新一个batch中追加</p>
+<pre><code>a.1）追加不成功，说明最新的batch还有剩余空间，返回null。需要外层逻辑创建新的batch
+
+a.2）追加成功，返回RecordAppendResult
+</code></pre>
+<p><strong>last.tryAppend()：</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>b）dq中无producerBatch，返回null，代表没有能追加成功。</p>
+<p>第一个到达此方法的线程肯定是返回了null，因为还没有消息累积进来，也不存在ProducerBatch对象。</p>
+<p>如果tryAppend返回null，说明没能直接在现有的batch上追加成功（也可能还没有batch），此时需要初始化新的ProducerBatch</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2023/04/16/kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BProducer%E6%A0%B8%E5%BF%83%E6%B5%81%E7%A8%8B/" rel="prev" title="「Kafka源码美学」之Producer核心流程">
+      <i class="fa fa-chevron-left"></i> 「Kafka源码美学」之Producer核心流程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2023/04/25/%E7%AE%97%E6%B3%95/%E9%80%92%E5%BD%92/" rel="next" title="post">
+      post <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#RecordAccumulator%E7%9A%84%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">RecordAccumulator的存储结构：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RecordAccumulator%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">RecordAccumulator代码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Append"><span class="nav-number">2.1.</span> <span class="nav-text">Append</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TryAppend"><span class="nav-number">2.2.</span> <span class="nav-text">TryAppend</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">最光阴</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">最光阴</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
