@@ -160,6 +160,117 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zgyyq.github.io/blog/2023/05/06/git/%E5%B8%A6%E4%BD%A0%E8%AE%A4%E8%AF%86%E4%B8%8D%E4%B8%80%E6%A0%B7%E7%9A%84Git/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="最光阴">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="最光阴写字的地方">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2023/05/06/git/%E5%B8%A6%E4%BD%A0%E8%AE%A4%E8%AF%86%E4%B8%8D%E4%B8%80%E6%A0%B7%E7%9A%84Git/" class="post-title-link" itemprop="url">带你认识不一样的Git -- Git内部原理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-05-06 17:25:06 / 修改时间：18:58:41" itemprop="dateCreated datePublished" datetime="2023-05-06T17:25:06+08:00">2023-05-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Git/" itemprop="url" rel="index"><span itemprop="name">Git</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>因为毕业以来所在的公司基建都比较完善，只需要点点点即可完成需求开发，分支合并等日常工作。所以对Git的认知也仅停留在”会用“的基础层面。</p>
+<p>直到来到了一家基建不太完善的公司，日常开发都需要从checkout dev分支开始（：仿佛回到了大学时期 - &#x3D; </p>
+<p>随之而来的也是各种问题，”合并之后，我代码怎么丢了？“、”你的merge request有不属于你改动的log，请rebase一下“等等。</p>
+<p>终于下定决心要好好学习Git了。我一直认为，当你需要深入学习某一个知识点时，了解其背后的原理，往往能有事半功倍的效果。</p>
+<p>只有当你了解Git背后底层的东西，才能帮你更好的梳理思路。试想一下，你每运行一次Git的高级命令，都知道底层发生了什么事，这样你才是真正的掌握了Git。</p>
+<p>让我们从0开始，回想下，你第一次使用Git的时候，使用的是什么命令？应该大部分都是git init吧。</p>
+<h2 id="从-git-init-开始"><a href="#从-git-init-开始" class="headerlink" title="从 git init 开始"></a>从 git init 开始</h2><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> git_test</span><br><span class="line"><span class="built_in">cd</span> git_test/</span><br><span class="line">git init</span><br><span class="line"><span class="built_in">ls</span> -a </span><br></pre></td></tr></table></figure>
+<p>可见，git init之后生成了.git目录。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">tree .git/</span><br><span class="line"></span><br><span class="line">├── HEAD</span><br><span class="line">├── config</span><br><span class="line">├── description</span><br><span class="line">├── hooks</span><br><span class="line">│   ├── applypatch-msg.sample</span><br><span class="line">│   ├── commit-msg.sample</span><br><span class="line">│   ├── fsmonitor-watchman.sample</span><br><span class="line">│   ├── post-update.sample</span><br><span class="line">│   ├── pre-applypatch.sample</span><br><span class="line">│   ├── pre-commit.sample</span><br><span class="line">│   ├── pre-merge-commit.sample</span><br><span class="line">│   ├── pre-push.sample</span><br><span class="line">│   ├── pre-rebase.sample</span><br><span class="line">│   ├── pre-receive.sample</span><br><span class="line">│   ├── prepare-commit-msg.sample</span><br><span class="line">│   ├── push-to-checkout.sample</span><br><span class="line">│   └── update.sample</span><br><span class="line">├── info</span><br><span class="line">│   └── exclude</span><br><span class="line">├── objects</span><br><span class="line">│   ├── info</span><br><span class="line">│   └── pack</span><br><span class="line">└── refs</span><br><span class="line">    ├── heads</span><br><span class="line">    └── tags</span><br></pre></td></tr></table></figure>
+<p>这个目录包含了几乎所有 Git 存储和操作的对象。而从根本上来讲 Git 是一个内容寻址（content-addressable）文件系统，当我们<strong>在上层执行各种Git高级命令时，实际上都是在操作Git的文件对象。</strong></p>
+<h2 id="Git对象"><a href="#Git对象" class="headerlink" title="Git对象"></a>Git对象</h2><h3 id="数据对象（blob-object）"><a href="#数据对象（blob-object）" class="headerlink" title="数据对象（blob object）"></a>数据对象（blob object）</h3><p>我们在该目录下创建两个文件，并执行git add 命令，看下会发生什么事？</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&quot;test1&quot;</span> &gt; test1.txt</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;test2&quot;</span> &gt; test2.txt</span><br><span class="line">git add *.txt</span><br></pre></td></tr></table></figure>
+
+<p>这个时候再去.git&#x2F;object目录下，你会发现仓库里多了两个文件：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">tree .git/objects/</span><br><span class="line"></span><br><span class="line">.git/objects/</span><br><span class="line">├── 18</span><br><span class="line">│   └── 0cf8328022becee9aaa2577a8f84ea2b9f3827</span><br><span class="line">├── a5</span><br><span class="line">│   └── bce3fd2565d8f458555a0c6f42d0504a848bd5</span><br><span class="line">├── info</span><br><span class="line">└── pack</span><br></pre></td></tr></table></figure>
+<p> 这就是开始时 Git 存储内容的方式——一个文件对应一条内容，以该内容加上特定头部信息一起的 SHA-1 校验和为文件命名。 校验和的前两个字符用于命名子目录，余下的 38 个字符则用作文件名。</p>
+<p>我们来看下这两个文件存储的是什么：</p>
+<pre><code>因为git将信息压缩成二进制文件，所以要使用git提供cat-file命令来取回转码前的数据，
+-t 可以查看object文件的类型，-p可以查看object文件的具体内容。
+
+git cat-file [-t] [-p] object filename object的名字不用输入全，能唯一区分就好（一般都是6位）
+</code></pre>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git cat-file -t 180cf8</span><br><span class="line">blob</span><br><span class="line"></span><br><span class="line">git cat-file -p 180cf8</span><br><span class="line">test2</span><br></pre></td></tr></table></figure>
+
+<p>可见这个文件是一个blob对象，存储的是文件的内容。</p>
+<h3 id="树对象（tree-object）"><a href="#树对象（tree-object）" class="headerlink" title="树对象（tree object）"></a>树对象（tree object）</h3><p>执行完git add 命令之后，所有的变更都存储到了暂存区中，这时，我们执行：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git commit -m <span class="string">&quot;feat：初始化commit&quot;</span></span><br></pre></td></tr></table></figure>
+<p>可以将变更推送到本地的Git仓库中。<br>上文说到当我们执行各种Git高级命令时，实际上都是在操作Git的文件对象。当执行完git commit命令之后，让我们来看下.git&#x2F;object目录发生了什么改变：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">tree .git/objects/</span><br><span class="line">.git/objects/</span><br><span class="line">├── 18</span><br><span class="line">│   └── 0cf8328022becee9aaa2577a8f84ea2b9f3827</span><br><span class="line">├── 35</span><br><span class="line">│   └── ad65e8f91eb6611a3f4a3dad741c8281fb0d08</span><br><span class="line">├── 81</span><br><span class="line">│   └── fa9d1c5348f86326ce5e7a86d11b54c8140d8d</span><br><span class="line">├── a5</span><br><span class="line">│   └── bce3fd2565d8f458555a0c6f42d0504a848bd5</span><br><span class="line">├── info</span><br><span class="line">└── pack</span><br></pre></td></tr></table></figure>
+
+<p>可见，目录增加了两个文件。继续探索：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git cat-file -t 81fa9d</span><br><span class="line">tree</span><br><span class="line"></span><br><span class="line">git cat-file -p 81fa9d</span><br><span class="line">100644 blob a5bce3fd2565d8f458555a0c6f42d0504a848bd5	test1.txt</span><br><span class="line">100644 blob 180cf8328022becee9aaa2577a8f84ea2b9f3827	test2.txt</span><br></pre></td></tr></table></figure>
+
+<p>这是树对象，它能解决文件名保存的问题，也允许我们将多个文件组织到一起。一个树对象包含了一条或多条树对象记录（tree entry），每条记录含有一个指向数据对象或者子树对象的 SHA-1 指针，以及相应的模式、类型、文件名信息。</p>
+<h3 id="提交对象（commit-object）"><a href="#提交对象（commit-object）" class="headerlink" title="提交对象（commit object）"></a>提交对象（commit object）</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git cat-file -t 35ad65e</span><br><span class="line">commit</span><br><span class="line"></span><br><span class="line">git cat-file -p 35ad65e</span><br><span class="line">tree 81fa9d1c5348f86326ce5e7a86d11b54c8140d8d</span><br><span class="line">author Yuqiang Lin &lt;yuqiang.lin@xxxx.com&gt; 1683369025 +0800</span><br><span class="line">committer Yuqiang Lin &lt;yuqiang.lin@xxxx.com&gt; 1683369025 +0800</span><br><span class="line"></span><br><span class="line">feat：初始化commit</span><br></pre></td></tr></table></figure>
+
+<p>当执行完git commit命令之后，会生成两种类型的对象：树对象、提交对象。</p>
+<p>而提交对象，它储存的是一个提交的信息，包括对应目录结构的快照tree的哈希值，上一个提交的哈希值（这里由于是第一个提交，所以没有父节点。在一个merge提交中还会出现多个父节点），提交的作者以及提交的具体时间，最后是该提交的信息。</p>
+<h2 id="Git引用"><a href="#Git引用" class="headerlink" title="Git引用"></a>Git引用</h2><p>至此，我们明白了Git是如何存储数据、提交信息的。但很多同学也许会问，那我们的分支信息存储在哪里呢？</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> .git/HEAD</span><br><span class="line">ref: refs/heads/master</span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> .git/refs/heads/master</span><br><span class="line">35ad65e8f91eb6611a3f4a3dad741c8281fb0d08</span><br></pre></td></tr></table></figure>
+
+<p>可见，在Git仓库里面，HEAD、分支、普通的Tag可以简单的理解成是一个指针，指向对应commit的SHA1值。文件位置是：git&#x2F;refs&#x2F;</p>
+<p>概括来说：<strong>HEAD里面的内容是当前分支的ref，而当前ref的内容是commit hash，commit object内容是 tree hash，tree object的内容是blob hash，blob存储着文件的具体内容</strong></p>
+<h2 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h2><p>了解了Git的内部原理之后，让我们来看下在日常工作中，我们执行的高级命令之后，对应的底层文件是如何变化的。</p>
+<h3 id="切换dev分支开发新feature"><a href="#切换dev分支开发新feature" class="headerlink" title="切换dev分支开发新feature"></a>切换dev分支开发新feature</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://zgyyq.github.io/blog/2023/05/06/git/git%E5%86%85%E9%83%A8%E5%8E%9F%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -185,7 +296,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2023-05-06 15:17:44 / 修改时间：15:28:43" itemprop="dateCreated datePublished" datetime="2023-05-06T15:17:44+08:00">2023-05-06</time>
+              <time title="创建时间：2023-05-06 15:17:44 / 修改时间：16:02:49" itemprop="dateCreated datePublished" datetime="2023-05-06T15:17:44+08:00">2023-05-06</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -210,7 +321,14 @@
       
           <h2 id="git的目录结构"><a href="#git的目录结构" class="headerlink" title=".git的目录结构"></a>.git的目录结构</h2><p>当在一个新目录或已有目录执行 git init 时，Git 会创建一个 .git 目录。 这个目录包含了几乎所有 Git 存储和操作的对象。</p>
 <p>HEAD 文件、（尚待创建的）index 文件，和 objects 目录、refs 目录。 这些条目是 Git 的核心组成部分。 objects 目录存储所有数据内容；refs 目录存储指向数据（分支）的提交对象的指针；HEAD 文件指示目前被检出的分支；index 文件保存暂存区信息。</p>
-<h2 id="git-对象"><a href="#git-对象" class="headerlink" title="git 对象"></a>git 对象</h2><p>数据对象（blob object）：保存了文件的内容</p>
+<h2 id="git-对象"><a href="#git-对象" class="headerlink" title="git 对象"></a>git 对象</h2><ol>
+<li>数据对象（blob object）：保存了文件的内容</li>
+<li>树对象（tree object）：它能解决文件名保存的问题，也允许我们将多个文件组织到一起。一个树对象包含了一条或多条树对象记录（tree entry），每条记录含有一个指向数据对象或者子树对象的 SHA-1 指针，以及相应的模式、类型、文件名信息。 </li>
+<li>提交对象（commit object）：现在有三个树对象，分别代表了我们想要跟踪的不同项目快照。然而问题依旧：若想重用这些快照，你必须记住所有三个 SHA-1 哈希值。 并且，你也完全不知道是谁保存了这些快照，在什么时刻保存的，以及为什么保存这些快照。 而以上这些，正是提交对象（commit object）能为你保存的基本信息。</li>
+</ol>
+<h2 id="git引用"><a href="#git引用" class="headerlink" title="git引用"></a>git引用</h2><p>我们可以借助类似于 git log 1a410e 这样的命令来浏览完整的提交历史，但为了能遍历那段历史从而找到所有相关对象，你仍须记住 1a410e 是最后一个提交。 我们需要一个文件来保存 SHA-1 值，并给文件起一个简单的名字，然后用这个名字指针来替代原始的 SHA-1 值。<br>在 Git 里，这样的文件被称为“引用（references，或缩写为 refs）”；你可以在 .git&#x2F;refs 目录下找到这类含有 SHA-1 值的文件。 </p>
+<p><img src="/blog/img/git/git_ref.png" alt="img"></p>
+<h2 id="git-reset"><a href="#git-reset" class="headerlink" title="git reset"></a>git reset</h2><p>git reset –-soft：回退到某个版本，只回退了commit的信息，不会恢复到index file一级。如果还要提交，直接commit即可；<br>git reset -–hard：彻底回退到某个版本，本地的源码也会变为上一个版本的内容，撤销的commit中所包含的更改被冲掉</p>
 
       
     </div>
@@ -987,7 +1105,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
