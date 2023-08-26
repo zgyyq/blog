@@ -20,35 +20,28 @@
     var CONFIG = {"hostname":"zgyyq.github.io","root":"/blog/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="Hello 大家好，我是最光阴。在上一篇文章中介绍了Kafka生产者的核心流程，可见Kafka将各个功能模块进行拆分，每个模块都具有独立的功能和职责。接下来，让我们一起探讨每个模板的细节，体验Kafka源码设计的美学。 首先让我们来看下RecordAccumulator - 数据累加器。 RecordAccumulator的存储结构：12345private final ConcurrentMap">
-<meta property="og:type" content="article">
-<meta property="og:title" content="「Kafka源码美学」之RecordAccumulator - 数据累加器">
-<meta property="og:url" content="https://zgyyq.github.io/blog/2023/04/21/kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BRecordAccumulator/index.html">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="最光阴写字的地方">
+<meta property="og:url" content="https://zgyyq.github.io/blog/page/2/index.html">
 <meta property="og:site_name" content="最光阴写字的地方">
-<meta property="og:description" content="Hello 大家好，我是最光阴。在上一篇文章中介绍了Kafka生产者的核心流程，可见Kafka将各个功能模块进行拆分，每个模块都具有独立的功能和职责。接下来，让我们一起探讨每个模板的细节，体验Kafka源码设计的美学。 首先让我们来看下RecordAccumulator - 数据累加器。 RecordAccumulator的存储结构：12345private final ConcurrentMap">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://zgyyq.github.io/blog/img/kafka%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/RecordAccumulator.png">
-<meta property="og:image" content="https://zgyyq.github.io/blog/img/%E5%85%AC%E4%BC%97%E5%8F%B7%E4%BA%8C%E7%BB%B4%E7%A0%81.jpeg">
-<meta property="article:published_time" content="2023-04-21T13:59:15.000Z">
-<meta property="article:modified_time" content="2023-05-05T14:41:49.623Z">
 <meta property="article:author" content="最光阴">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://zgyyq.github.io/blog/img/kafka%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/RecordAccumulator.png">
 
-<link rel="canonical" href="https://zgyyq.github.io/blog/2023/04/21/kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BRecordAccumulator/">
+<link rel="canonical" href="https://zgyyq.github.io/blog/page/2/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : false,
-    isPost : true,
+    isHome : true,
+    isPost : false,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>「Kafka源码美学」之RecordAccumulator - 数据累加器 | 最光阴写字的地方</title>
+  <title>最光阴写字的地方</title>
   
 
 
@@ -161,10 +154,9 @@
         <div class="content-wrap">
           
 
-          <div class="content post posts-expand">
+          <div class="content index posts-expand">
             
-
-    
+      
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -180,9 +172,10 @@
       <meta itemprop="name" content="最光阴写字的地方">
     </span>
       <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          「Kafka源码美学」之RecordAccumulator - 数据累加器
-        </h1>
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2023/04/21/kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BRecordAccumulator/" class="post-title-link" itemprop="url">「Kafka源码美学」之RecordAccumulator - 数据累加器</a>
+        </h2>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -221,7 +214,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>Hello 大家好，我是最光阴。在上一篇文章中介绍了Kafka生产者的核心流程，可见Kafka将各个功能模块进行拆分，每个模块都具有独立的功能和职责。接下来，让我们一起探讨每个模板的细节，体验Kafka源码设计的美学。</p>
+          <p>Hello 大家好，我是最光阴。在上一篇文章中介绍了Kafka生产者的核心流程，可见Kafka将各个功能模块进行拆分，每个模块都具有独立的功能和职责。接下来，让我们一起探讨每个模板的细节，体验Kafka源码设计的美学。</p>
 <p>首先让我们来看下RecordAccumulator - 数据累加器。</p>
 <h2 id="RecordAccumulator的存储结构："><a href="#RecordAccumulator的存储结构：" class="headerlink" title="RecordAccumulator的存储结构："></a>RecordAccumulator的存储结构：</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ConcurrentMap&lt;String <span class="comment">/*topic*/</span>, TopicInfo&gt; topicInfoMap = <span class="keyword">new</span> <span class="title class_">CopyOnWriteMap</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">TopicInfo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">final</span> ConcurrentMap&lt;Integer <span class="comment">/*partition*/</span>, Deque&lt;ProducerBatch&gt;&gt; batches = <span class="keyword">new</span> <span class="title class_">CopyOnWriteMap</span>&lt;&gt;();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -249,34 +242,136 @@
 <h2 id="作者简介"><a href="#作者简介" class="headerlink" title="作者简介"></a>作者简介</h2><p>曾就职于拼多多，前蚂蚁金服高级Java开发。平时会分享些工作中遇到的技术问题，包括但不限于Java、分布式、大数据。也会分享些理财笔记。关注公众号，了解更多~</p>
 <p><img src="/blog/img/%E5%85%AC%E4%BC%97%E5%8F%B7%E4%BA%8C%E7%BB%B4%E7%A0%81.jpeg" alt="img"></p>
 
+      
     </div>
 
     
     
     
-
       <footer class="post-footer">
-
-        
-
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/blog/2023/04/16/kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BProducer%E6%A0%B8%E5%BF%83%E6%B5%81%E7%A8%8B/" rel="prev" title="「Kafka源码美学」之Producer核心流程">
-      <i class="fa fa-chevron-left"></i> 「Kafka源码美学」之Producer核心流程
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/blog/2023/04/25/%E7%AE%97%E6%B3%95/%E9%80%92%E5%BD%92/" rel="next" title="post">
-      post <i class="fa fa-chevron-right"></i>
-    </a></div>
-    </div>
+        <div class="post-eof"></div>
       </footer>
-    
   </article>
   
   
   
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zgyyq.github.io/blog/2023/04/16/kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BProducer%E6%A0%B8%E5%BF%83%E6%B5%81%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="最光阴">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="最光阴写字的地方">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2023/04/16/kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/%E3%80%8CKafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6%E3%80%8D%E4%B9%8BProducer%E6%A0%B8%E5%BF%83%E6%B5%81%E7%A8%8B/" class="post-title-link" itemprop="url">「Kafka源码美学」之Producer核心流程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-04-16 14:57:39" itemprop="dateCreated datePublished" datetime="2023-04-16T14:57:39+08:00">2023-04-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-05-05 22:41:47" itemprop="dateModified" datetime="2023-05-05T22:41:47+08:00">2023-05-05</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Kafka%E6%BA%90%E7%A0%81%E7%BE%8E%E5%AD%A6/" itemprop="url" rel="index"><span itemprop="name">Kafka源码美学</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>大家好，我是最光阴。最近深入学习了Kafka源码，受益匪浅。因此，我决定分享一些有趣的内容，希望通过这个系列来介绍Kafka源码设计的美学。这个系列将分为两部分：生产者和消费者。</p>
+<p><strong>注：本系列是基于Kafka 3.4.0进行源码解析，为了让读者更容易理解，贴出的代码只保留核心流程。</strong></p>
+<p><strong>生产者：</strong><br>「Kafka源码美学」之Producer核心流程<br>「Kafka源码美学」之RecordAccumulator - 数据累加器<br>「Kafka源码美学」之BufferPool<br>「Kafka源码美学」之Sender线程<br>「Kafka源码美学」之网络发送</p>
+<p><strong>消费者：</strong><br>「Kafka源码美学」之Consumer核心流程<br>「Kafka源码美学」之ConsumerCoordinator - 协调器<br>「Kafka源码美学」之Fetcher - 抓取器<br>「Kafka源码美学」之网络接收</p>
+<p><strong>番外：</strong><br>「Kafka源码美学」之Kafka如何解决粘包、拆包<br>未完待续</p>
+<p>现在让我们开始『kafka源码美学』系列专题的第一篇：生产者流程。在本篇文章中，我们将探索 Kafka 生产者的内部机制，揭示它如何在消息传递方面表现出卓越的性能和可靠性。</p>
+<p>首先让我们来看下生产者的架构图</p>
+<h2 id="架构图"><a href="#架构图" class="headerlink" title="架构图"></a>架构图</h2><p><img src="/blog/img/kafka%E6%BA%90%E7%A0%81%E7%B3%BB%E5%88%97/%E7%94%9F%E4%BA%A7%E8%80%85%E6%9E%B6%E6%9E%84%E5%9B%BE.png" alt="img"></p>
+<p>在生产一条消息时，会先后经过<strong>拦截器</strong>、<strong>序列化器</strong>对消息进行处理，再经过<strong>分区器</strong>确定消息发送在具体topic下的哪个分区，然后发送到对应的消息累加器中。</p>
+<p><strong>sender线程</strong>会读取<strong>消息累加器</strong>中的数据，再包装成Request通过Selector发送到Kafka集群。</p>
+<p><strong>可见Kafka的发送流程其实是个异步的流程。</strong></p>
+<p>接下来看看Kafka代码中是如何实现的。</p>
+<h2 id="客户端代码"><a href="#客户端代码" class="headerlink" title="客户端代码"></a>客户端代码</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.kafka;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.kafka.clients.producer.KafkaProducer;</span><br><span class="line"><span class="keyword">import</span> org.apache.kafka.clients.producer.ProducerRecord;</span><br><span class="line"><span class="keyword">import</span> org.apache.kafka.common.serialization.StringSerializer;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.Properties;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">Properties</span> <span class="variable">props</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Properties</span>();</span><br><span class="line">        props.put(<span class="string">&quot;bootstrap.servers&quot;</span>, <span class="string">&quot;127.0.0.1:9092&quot;</span>);</span><br><span class="line">        props.put(<span class="string">&quot;acks&quot;</span>, <span class="string">&quot;all&quot;</span>);</span><br><span class="line">        props.put(<span class="string">&quot;retries&quot;</span>, <span class="number">0</span>);</span><br><span class="line">        props.put(<span class="string">&quot;batch.size&quot;</span>, <span class="number">16384</span>);</span><br><span class="line">        props.put(<span class="string">&quot;key.serializer&quot;</span>, StringSerializer.class.getName());</span><br><span class="line">        props.put(<span class="string">&quot;value.serializer&quot;</span>, StringSerializer.class.getName());</span><br><span class="line">        KafkaProducer&lt;String, String&gt; producer = <span class="keyword">new</span> <span class="title class_">KafkaProducer</span>&lt;&gt;(props);</span><br><span class="line"></span><br><span class="line">        String[] values = <span class="keyword">new</span> <span class="title class_">String</span>[]&#123;<span class="string">&quot;111&quot;</span>, <span class="string">&quot;222&quot;</span>, <span class="string">&quot;33&quot;</span>&#125;;</span><br><span class="line">        ProducerRecord&lt;String, String&gt; producerRecord = <span class="keyword">new</span> <span class="title class_">ProducerRecord</span>&lt;String, String&gt;(<span class="string">&quot;quickstart-events&quot;</span>, <span class="string">&quot;key&quot;</span>, values.toString());</span><br><span class="line">        producer.send(producerRecord);</span><br><span class="line">        producer.close();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Producer初始化"><a href="#Producer初始化" class="headerlink" title="Producer初始化"></a>Producer初始化</h2><p>首先分析KafkaProducer的初始化：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">KafkaProducer&lt;String, String&gt; producer = <span class="keyword">new</span> <span class="title class_">KafkaProducer</span>&lt;&gt;(props);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">KafkaProducer(ProducerConfig config,</span><br><span class="line">                  Serializer&lt;K&gt; keySerializer,</span><br><span class="line">                  Serializer&lt;V&gt; valueSerializer,</span><br><span class="line">                  ProducerMetadata metadata,</span><br><span class="line">                  KafkaClient kafkaClient,</span><br><span class="line">                  ProducerInterceptors&lt;K, V&gt; interceptors,</span><br><span class="line">                  Time time) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// ....... 省略一些代码</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// 获取配置的分区器（如果没有配置，则使用默认的org.apache.kafka.clients.producer.DefaultPartitioner），后面用来决定，发送的每条消息是路由到Topic的哪个分区里去的</span></span><br><span class="line">            <span class="built_in">this</span>.partitioner = config.getConfiguredInstance(</span><br><span class="line">                    ProducerConfig.PARTITIONER_CLASS_CONFIG,</span><br><span class="line">                    Partitioner.class,</span><br><span class="line">                    Collections.singletonMap(ProducerConfig.CLIENT_ID_CONFIG, clientId));</span><br><span class="line"></span><br><span class="line">           </span><br><span class="line">            <span class="comment">// 初始化核心组件：RecordAccumulator，它是一个发送消息数据的记录累加器，用于批量发送消息数据</span></span><br><span class="line">            <span class="built_in">this</span>.accumulator = <span class="keyword">new</span> <span class="title class_">RecordAccumulator</span>(logContext,</span><br><span class="line">                    batchSize,</span><br><span class="line">                    <span class="built_in">this</span>.compressionType,</span><br><span class="line">                    lingerMs(config),</span><br><span class="line">                    retryBackoffMs,</span><br><span class="line">                    deliveryTimeoutMs,</span><br><span class="line">                    partitionerConfig,</span><br><span class="line">                    metrics,</span><br><span class="line">                    PRODUCER_METRIC_GROUP_NAME,</span><br><span class="line">                    time,</span><br><span class="line">                    apiVersions,</span><br><span class="line">                    transactionManager,</span><br><span class="line">                    <span class="keyword">new</span> <span class="title class_">BufferPool</span>(<span class="built_in">this</span>.totalMemorySize, batchSize, metrics, time, PRODUCER_METRIC_GROUP_NAME));</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            <span class="comment">// 初始化核心组件：metadata，它记录了生产者的源信息，包括集群信息、topic信息等</span></span><br><span class="line">            <span class="built_in">this</span>.metadata = <span class="keyword">new</span> <span class="title class_">ProducerMetadata</span>(retryBackoffMs,</span><br><span class="line">                        config.getLong(ProducerConfig.METADATA_MAX_AGE_CONFIG),</span><br><span class="line">                        config.getLong(ProducerConfig.METADATA_MAX_IDLE_CONFIG),</span><br><span class="line">                        logContext,</span><br><span class="line">                        clusterResourceListeners,</span><br><span class="line">                        Time.SYSTEM);</span><br><span class="line">            <span class="built_in">this</span>.metadata.bootstrap(addresses);</span><br><span class="line">        </span><br><span class="line">            <span class="comment">// 初始化核心组件：sender, 它封装了具体的发送流程</span></span><br><span class="line">            <span class="built_in">this</span>.sender = newSender(logContext, kafkaClient, <span class="built_in">this</span>.metadata);</span><br><span class="line">            <span class="type">String</span> <span class="variable">ioThreadName</span> <span class="operator">=</span> NETWORK_THREAD_PREFIX + <span class="string">&quot; | &quot;</span> + clientId;</span><br><span class="line">            <span class="comment">// 创建io线程，执行sender方法</span></span><br><span class="line">            <span class="built_in">this</span>.ioThread = <span class="keyword">new</span> <span class="title class_">KafkaThread</span>(ioThreadName, <span class="built_in">this</span>.sender, <span class="literal">true</span>);</span><br><span class="line">            <span class="comment">// 启动线程</span></span><br><span class="line">            <span class="built_in">this</span>.ioThread.start();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// ....... 省略一些代码</span></span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">           </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>可见KafkaProducer初始化时构建了一系列的核心组件：</p>
+<ol>
+<li>Partitioner（分区器），决定消息路由到Topic的哪个分区里</li>
+<li>Metadata（元数据），定期向集群拉取元数据信息更新。配置 metadata.max.age.ms 时间间隔，默认是5分钟，默认每隔5分钟一定会强制刷新一下</li>
+<li>RecordAccumulator（数据累加器），负责消息的缓冲机制，发送到每个分区的消息会被封装成batch，一般batch size是16kb，默认情况下要凑够一个batch才会发送，但是可以设置 linger.ms，如果在指定时间范围内，都没凑出来一个batch就把这条消息发送出去，比如说5ms，如果5ms还没凑出来一个batch，那么就必须立即把这个消息发送出去</li>
+<li>Sender（发送器），负责从缓冲区里获取消息发送到broker上去</li>
+</ol>
+<p><strong>其源码设计中充分体现了组合优于继承的思想。</strong></p>
+<p>Kafka将各个功能模块进行拆分，每个模块都具有独立的功能和职责，这样可以使得代码更加模块化和可维护。</p>
+<p>后续会为每个模块单独写一篇文章详细讲解。</p>
+<h2 id="producer-send"><a href="#producer-send" class="headerlink" title="producer.send()"></a>producer.send()</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">private</span> Future&lt;RecordMetadata&gt; <span class="title function_">doSend</span><span class="params">(ProducerRecord&lt;K, V&gt; record, Callback callback)</span> &#123;</span><br><span class="line">    <span class="comment">// 序列化key</span></span><br><span class="line">    serializedKey = keySerializer.serialize(record.topic(), record.headers(), record.key());</span><br><span class="line">    <span class="comment">// 序列号value</span></span><br><span class="line">    serializedValue = valueSerializer.serialize(record.topic(), record.headers(), record.value());</span><br><span class="line">    <span class="comment">// 根据分区器算法计算应该往哪个分区中发送消息</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">partition</span> <span class="operator">=</span> partition(record, serializedKey, serializedValue, cluster);</span><br><span class="line">    <span class="comment">// 将消息追加到 RecordAccumulator中，由accumulator封装成batch发送</span></span><br><span class="line">    RecordAccumulator.<span class="type">RecordAppendResult</span> <span class="variable">result</span> <span class="operator">=</span> accumulator.append(record.topic(), partition, timestamp, serializedKey,</span><br><span class="line">                    serializedValue, headers, appendCallbacks, remainingWaitMs, abortOnNewBatch, nowMs, cluster);</span><br><span class="line">    <span class="comment">// 如果该批次满了，或者是新创建的批次，则唤醒sender线程，进行消息发送</span></span><br><span class="line">    <span class="keyword">if</span> (result.batchIsFull || result.newBatchCreated) &#123;</span><br><span class="line">                log.trace(<span class="string">&quot;Waking up the sender since topic &#123;&#125; partition &#123;&#125; is either full or getting a new batch&quot;</span>, record.topic(), appendCallbacks.getPartition());</span><br><span class="line">                <span class="built_in">this</span>.sender.wakeup();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>doSend() 主要是三个步骤：</p>
+<ol>
+<li>序列化 record 的 key 和 value</li>
+<li>获取该 record 要发送到的 partition（可以指定，也可以根据算法计算）</li>
+<li>向 accumulator 中追加 record 数据，数据会先进行缓存（默认32M）</li>
+</ol>
+<h2 id="作者简介"><a href="#作者简介" class="headerlink" title="作者简介"></a>作者简介</h2><p>曾就职于拼多多，前蚂蚁金服高级Java开发。平时会分享些工作中遇到的技术问题，包括但不限于Java、分布式、大数据。也会分享些理财笔记。关注公众号，了解更多~</p>
+<p><img src="/blog/img/%E5%85%AC%E4%BC%97%E5%8F%B7%E4%BA%8C%E7%BB%B4%E7%A0%81.jpeg" alt="img"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+
+  
+  <nav class="pagination">
+    <a class="extend prev" rel="prev" href="/blog/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/blog/">1</a><span class="page-number current">2</span>
+  </nav>
 
 
 
@@ -328,7 +423,6 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#RecordAccumulator%E7%9A%84%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">RecordAccumulator的存储结构：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84%E5%9B%BE"><span class="nav-number">2.</span> <span class="nav-text">架构图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RecordAccumulator%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">RecordAccumulator代码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Append"><span class="nav-number">3.1.</span> <span class="nav-text">Append</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TryAppend"><span class="nav-number">3.2.</span> <span class="nav-text">TryAppend</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AppendNewBatch"><span class="nav-number">3.3.</span> <span class="nav-text">AppendNewBatch</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%9C%E8%80%85%E7%AE%80%E4%BB%8B"><span class="nav-number">4.</span> <span class="nav-text">作者简介</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
